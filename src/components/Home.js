@@ -145,7 +145,7 @@ function Home({ user }) {
   return (
     <div style={{ padding: 20, textAlign: 'center' }}>
       <Typography variant="h3" style={{ marginBottom: 20, fontStyle: 'italic', animation: 'fadeIn 2s ease-in-out' }}>
-        Welcome to Cat Gallery 😺
+        Welcome 😺
       </Typography>
 
       <Button
