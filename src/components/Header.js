@@ -1,10 +1,14 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { AppBar, Toolbar, Typography, Button } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, IconButton } from '@mui/material';
 import { signInWithPopup, GoogleAuthProvider, signOut } from 'firebase/auth';
 import { auth } from '../firebase';
+import { useTheme } from '../ThemeContext'; // Importa il contesto
+import { WbSunny as SunIcon, NightsStay as MoonIcon } from '@mui/icons-material';
 
 function Header({ user }) {
+  const { isDarkTheme, toggleTheme } = useTheme(); // Usa il contesto
+
   const handleLogin = async () => {
     try {
       await signInWithPopup(auth, new GoogleAuthProvider());
@@ -22,16 +26,16 @@ function Header({ user }) {
   };
 
   return (
-    <AppBar position="static" sx={{ backgroundColor: '#ffffff', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', borderBottom: '1px solid #e0e0e0' }}>
+    <AppBar position="static" sx={{ backgroundColor: isDarkTheme ? '#333' : '#ffffff', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', borderBottom: '1px solid #e0e0e0' }}>
       <Toolbar>
         <Typography 
           variant="h6" 
-          sx={{ flexGrow: 1, fontFamily: 'Roboto, sans-serif', fontWeight: 'bold', color: '#333' }}
+          sx={{ flexGrow: 1, fontFamily: 'Roboto, sans-serif', fontWeight: 'bold', color: isDarkTheme ? '#fff' : '#333' }}
         >
           <Link 
             to="/" 
             style={{ 
-              color: '#333', 
+              color: isDarkTheme ? '#fff' : '#333', 
               textDecoration: 'none', 
               fontSize: '1.8rem',
               fontWeight: 'bold'
@@ -46,7 +50,7 @@ function Header({ user }) {
               color="inherit" 
               component={Link} 
               to="/favorites"
-              sx={{ fontFamily: 'Roboto, sans-serif', color: '#333', marginRight: '20px' }}
+              sx={{ fontFamily: 'Roboto, sans-serif', color: isDarkTheme ? '#fff' : '#333', marginRight: '20px' }}
             >
               Favorites
             </Button>
@@ -67,6 +71,9 @@ function Header({ user }) {
             Login
           </Button>
         )}
+        <IconButton onClick={toggleTheme} sx={{ color: isDarkTheme ? '#fff' : '#000' }}>
+          {isDarkTheme ? <SunIcon /> : <MoonIcon />}
+        </IconButton>
       </Toolbar>
     </AppBar>
   );

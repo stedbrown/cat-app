@@ -4,8 +4,10 @@ import { Button, Card, CardMedia, CardActions, CardContent, Typography, Grid, Ci
 import { firestore } from '../firebase';
 import { collection, query, orderBy, limit, getDocs, doc, getDoc, setDoc, deleteDoc, updateDoc, increment, onSnapshot } from 'firebase/firestore';
 import Lightbox from './Lightbox';
+import { useTheme } from '../ThemeContext'; // Importa il contesto del tema
 
 function Home({ user }) {
+  const { isDarkTheme } = useTheme(); // Usa il contesto per ottenere il tema
   const [catImage, setCatImage] = useState(null);
   const [catId, setCatId] = useState(null);
   const [likes, setLikes] = useState(0);
@@ -136,8 +138,8 @@ function Home({ user }) {
   };
 
   return (
-    <div style={{ padding: '20px', backgroundColor: '#f9f9f9', minHeight: '100vh' }}>
-      <Typography variant="h3" sx={{ mb: 4, fontStyle: 'italic', color: '#333', animation: 'fadeIn 2s ease-in-out' }}>
+    <div style={{ padding: '20px', backgroundColor: isDarkTheme ? '#121212' : '#f5f5f5', minHeight: '100vh', color: isDarkTheme ? '#ffffff' : '#000000' }}>
+      <Typography variant="h3" sx={{ mb: 4, fontStyle: 'italic', color: isDarkTheme ? '#ffffff' : '#000000', animation: 'fadeIn 2s ease-in-out' }}>
         Welcome 😺
       </Typography>
 
@@ -145,15 +147,15 @@ function Home({ user }) {
         variant="contained"
         color="primary"
         onClick={generateCat}
-        sx={{ mb: 4, backgroundColor: '#ff5722', color: '#fff', '&:hover': { backgroundColor: '#e64a19' } }}
+        sx={{ mb: 4, backgroundColor: '#90caf9', color: isDarkTheme ? '#121212' : '#000000', '&:hover': { backgroundColor: '#64b5f6' } }}
       >
         😺 Generate Cat
       </Button>
 
       {loading ? (
-        <CircularProgress sx={{ color: '#ff5722' }} />
+        <CircularProgress sx={{ color: '#90caf9' }} />
       ) : catImage ? (
-        <Card sx={{ maxWidth: 345, mx: 'auto', mb: 4, borderRadius: 12, boxShadow: 3, transition: 'transform 0.3s', '&:hover': { transform: 'scale(1.05)' } }}>
+        <Card sx={{ maxWidth: 345, mx: 'auto', mb: 4, borderRadius: 12, boxShadow: 3, backgroundColor: isDarkTheme ? '#1e1e1e' : '#ffffff', transition: 'transform 0.3s', '&:hover': { transform: 'scale(1.05)' } }}>
           <CardMedia
             component="img"
             height="300"
@@ -189,12 +191,12 @@ function Home({ user }) {
                 </Button>
                 <Button
                   size="small"
-                  color={isFavorited ? "warning" : "primary"}
+                  color={isFavorited ? "secondary" : "primary"}
                   onClick={handleFavorite}
                   sx={{
                     transition: 'transform 0.2s, background-color 0.2s',
                     '&:hover': {
-                      backgroundColor: isFavorited ? '#fbc02d' : '#1976d2',
+                      backgroundColor: isFavorited ? '#f48fb1' : '#f06292',
                       transform: 'scale(1.1)',
                     },
                     '&:active': {
@@ -202,24 +204,28 @@ function Home({ user }) {
                     },
                   }}
                 >
-                  {isFavorited ? '⭐ Unfavorite' : '🌟 Favorite'}
+                  {isFavorited ? '⭐ Remove from Favorites' : '⭐ Add to Favorites'}
                 </Button>
               </>
             )}
           </CardActions>
         </Card>
-      ) : null}
+      ) : (
+        <Typography variant="body1" color="text.secondary">
+          No cat image available.
+        </Typography>
+      )}
 
-      <Grid container spacing={2} sx={{ mt: 4 }}>
+      <Grid container spacing={2}>
         {topCats.map((cat, index) => (
           <Grid item xs={12} sm={6} md={4} key={cat.id}>
-            <Card sx={{ maxWidth: 345, mx: 'auto', mb: 4, borderRadius: 12, boxShadow: 3, transition: 'transform 0.3s', '&:hover': { transform: 'scale(1.05)' } }}>
+            <Card sx={{ maxWidth: 345, mx: 'auto', mb: 4, borderRadius: 12, boxShadow: 3, backgroundColor: isDarkTheme ? '#1e1e1e' : '#ffffff', transition: 'transform 0.3s', '&:hover': { transform: 'scale(1.05)' } }}>
               <CardMedia
                 component="img"
                 height="300"
                 image={cat.url}
-                alt="Cat"
-                onClick={() => handleImageClick(index + 1)}
+                alt={`Top cat ${index + 1}`}
+                onClick={() => handleImageClick(index)}
                 sx={{ cursor: 'pointer', borderRadius: 12 }}
               />
               <CardContent>
@@ -233,10 +239,11 @@ function Home({ user }) {
       </Grid>
 
       <Lightbox
-        isOpen={isOpen}
-        imageSrc={photoIndex === 0 ? catImage : topCats[photoIndex - 1]?.url}
+        open={isOpen}
+        image={catImage}
         onClose={() => setIsOpen(false)}
-        caption={photoIndex === 0 ? `❤️ Likes: ${likes}` : `❤️ Likes: ${topCats[photoIndex - 1]?.likes}`}
+        index={photoIndex}
+        images={topCats.map(cat => cat.url)}
       />
     </div>
   );
