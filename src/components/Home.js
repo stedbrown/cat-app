@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Button, Card, CardMedia, CardActions, CardContent, Typography } from '@mui/material';
-// Importa solo ciò che utilizzi
+import { Button, Card, CardMedia, CardActions, CardContent, Typography, Grid } from '@mui/material';
+import { Favorite, Star } from '@mui/icons-material';
 import { firestore } from '../firebase';
-// Rimuovi importazioni non utilizzate
-// import { Favorite, Star } from '@mui/icons-material';
-import Lightbox from 'react-image-lightbox';
-import 'react-image-lightbox/style.css'; // Importa lo stile per la lightbox
+import { collection, query, orderBy, limit, getDocs, doc, getDoc, setDoc, deleteDoc, updateDoc, increment, onSnapshot } from 'firebase/firestore';
+import Lightbox from './Lightbox'; // Importa il componente Lightbox
 
 function Home({ user }) {
   const [catImage, setCatImage] = useState(null);
@@ -15,28 +13,26 @@ function Home({ user }) {
   const [isLiked, setIsLiked] = useState(false);
   const [isFavorited, setIsFavorited] = useState(false);
   const [topCats, setTopCats] = useState([]);
-  const [photoIndex, setPhotoIndex] = useState(0);
+  const [photoIndex, setPhotoIndex] = useState(-1);
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    // Carica le prime 10 immagini con più like
     const fetchTopCats = async () => {
-      const imagesRef = firestore.collection('images');
-      const snapshot = await imagesRef.orderBy('likes', 'desc').limit(10).get();
-      const cats = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
-      setTopCats(cats);
+      const catsRef = collection(firestore, 'images');
+      const topCatsQuery = query(catsRef, orderBy('likes', 'desc'), limit(10));
+      const querySnapshot = await getDocs(topCatsQuery);
+      const catsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setTopCats(catsData);
     };
+
     fetchTopCats();
   }, []);
 
   useEffect(() => {
     if (catId) {
-      const imageRef = firestore.collection('images').doc(catId);
-      const unsubscribe = imageRef.onSnapshot((doc) => {
-        if (doc.exists) {
+      const imageRef = doc(firestore, 'images', catId);
+      const unsubscribe = onSnapshot(imageRef, (doc) => {
+        if (doc.exists()) {
           setLikes(doc.data().likes || 0);
         }
       });
@@ -47,14 +43,14 @@ function Home({ user }) {
 
   useEffect(() => {
     if (user && catId) {
-      const likeRef = firestore.collection('images').doc(catId).collection('likes').doc(user.uid);
-      likeRef.get().then((docSnapshot) => {
-        setIsLiked(docSnapshot.exists);
+      const likeRef = doc(firestore, 'images', catId, 'likes', user.uid);
+      getDoc(likeRef).then((docSnapshot) => {
+        setIsLiked(docSnapshot.exists());
       });
 
-      const favoriteRef = firestore.collection('favorites').doc(`${user.uid}_${catId}`);
-      favoriteRef.get().then((docSnapshot) => {
-        setIsFavorited(docSnapshot.exists);
+      const favoriteRef = doc(firestore, 'favorites', `${user.uid}_${catId}`);
+      getDoc(favoriteRef).then((docSnapshot) => {
+        setIsFavorited(docSnapshot.exists());
       });
     }
   }, [user, catId]);
@@ -66,25 +62,25 @@ function Home({ user }) {
     setCatImage(newCatImage);
     setCatId(newCatId);
 
-    const imageRef = firestore.collection('images').doc(newCatId);
-    const imageDoc = await imageRef.get();
-    if (!imageDoc.exists) {
-      await imageRef.set({ likes: 0, url: newCatImage });
+    const imageRef = doc(firestore, 'images', newCatId);
+    const imageDoc = await getDoc(imageRef);
+    if (!imageDoc.exists()) {
+      await setDoc(imageRef, { likes: 0, url: newCatImage });
     }
   };
 
   const handleLike = async () => {
     if (user && catId) {
-      const imageRef = firestore.collection('images').doc(catId);
-      const likeRef = firestore.collection('images').doc(catId).collection('likes').doc(user.uid);
+      const imageRef = doc(firestore, 'images', catId);
+      const likeRef = doc(firestore, 'images', catId, 'likes', user.uid);
 
       if (isLiked) {
-        await imageRef.update({ likes: firestore.FieldValue.increment(-1) });
-        await likeRef.delete();
+        await updateDoc(imageRef, { likes: increment(-1) });
+        await deleteDoc(likeRef);
         setIsLiked(false);
       } else {
-        await imageRef.update({ likes: firestore.FieldValue.increment(1) });
-        await likeRef.set({ liked: true });
+        await updateDoc(imageRef, { likes: increment(1) });
+        await setDoc(likeRef, { liked: true });
         setIsLiked(true);
       }
     }
@@ -92,12 +88,12 @@ function Home({ user }) {
 
   const handleFavorite = async () => {
     if (user && catId) {
-      const favoriteRef = firestore.collection('favorites').doc(`${user.uid}_${catId}`);
+      const favoriteRef = doc(firestore, 'favorites', `${user.uid}_${catId}`);
 
       if (isFavorited) {
-        await favoriteRef.delete();
+        await deleteDoc(favoriteRef);
       } else {
-        await favoriteRef.set({
+        await setDoc(favoriteRef, {
           imageUrl: catImage,
           imageId: catId,
           userId: user.uid,
@@ -107,14 +103,21 @@ function Home({ user }) {
     }
   };
 
+  const handleImageClick = (index) => {
+    setPhotoIndex(index);
+    setIsOpen(true);
+  };
+
   return (
     <div style={{ padding: 20 }}>
       <Typography variant="h3" className="animated-text">
         Welcome to Cat Gallery 😺
       </Typography>
+
       <Button variant="contained" color="primary" onClick={generateCat}>
-        Generate Cat
+        😺 Generate Cat
       </Button>
+
       {catImage && (
         <Card sx={{ maxWidth: 345, margin: '20px auto' }}>
           <CardMedia
@@ -122,12 +125,11 @@ function Home({ user }) {
             height="300"
             image={catImage}
             alt="Cat"
-            onClick={() => setIsOpen(true)}
-            style={{ cursor: 'pointer' }}
+            onClick={() => handleImageClick(0)}
           />
           <CardContent>
             <Typography variant="body2" color="text.secondary">
-              Likes: {likes}
+              ❤️ Likes: {likes}
             </Typography>
           </CardContent>
           <CardActions>
@@ -138,56 +140,49 @@ function Home({ user }) {
                   color={isLiked ? "secondary" : "primary"} 
                   onClick={handleLike}
                 >
-                  ❤️ {isLiked ? 'Unlike' : 'Like'}
+                  {isLiked ? '💔 Unlike' : '❤️ Like'}
                 </Button>
                 <Button 
                   size="small" 
                   color={isFavorited ? "warning" : "primary"} 
                   onClick={handleFavorite}
                 >
-                  ⭐ {isFavorited ? 'Unfavorite' : 'Favorite'}
+                  {isFavorited ? '⭐ Unfavorite' : '🌟 Favorite'}
                 </Button>
               </>
             )}
           </CardActions>
         </Card>
       )}
-      {isOpen && (
-        <Lightbox
-          mainSrc={catImage}
-          onCloseRequest={() => setIsOpen(false)}
-          imageCaption={`❤️ Likes: ${likes}`}
-        />
-      )}
-      <div>
-        <Typography variant="h5" style={{ fontStyle: 'italic' }}>
-          Top 10 Cats by Likes
-        </Typography>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-          {topCats.map((cat) => (
-            <Card key={cat.id} sx={{ maxWidth: 345 }}>
+
+      <Grid container spacing={2} style={{ marginTop: 20 }}>
+        {topCats.map((cat, index) => (
+          <Grid item xs={12} sm={6} md={4} key={cat.id}>
+            <Card sx={{ maxWidth: 345, margin: '20px auto' }}>
               <CardMedia
                 component="img"
-                height="200"
+                height="300"
                 image={cat.url}
                 alt="Cat"
-                onClick={() => {
-                  setCatImage(cat.url);
-                  setLikes(cat.likes);
-                  setCatId(cat.id);
-                  setIsOpen(true);
-                }}
-                style={{ cursor: 'pointer' }}
+                onClick={() => handleImageClick(index + 1)}
               />
               <CardContent>
                 <Typography variant="body2" color="text.secondary">
-                  Likes: {cat.likes}
+                  ❤️ Likes: {cat.likes}
                 </Typography>
               </CardContent>
             </Card>
-          ))}
-        </div>
-      </div>
+          </Grid>
+        ))}
+      </Grid>
+
+      {/* Lightbox per visualizzare l'immagine ingrandita */}
+      <Lightbox
+        isOpen={isOpen}
+        imageSrc={photoIndex === 0 ? catImage : topCats[photoIndex - 1]?.url}
+        onClose={() => setIsOpen(false)}
+        caption={photoIndex === 0 ? `❤️ Likes: ${likes}` : `❤️ Likes: ${topCats[photoIndex - 1]?.likes}`}
+      />
     </div>
   );
 }
