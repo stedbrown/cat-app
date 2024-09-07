@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Button, Card, CardMedia, CardActions, CardContent, Typography, Grid, CircularProgress } from '@mui/material';
 import { firestore } from '../firebase';
 import { collection, query, orderBy, limit, getDocs, doc, getDoc, setDoc, deleteDoc, updateDoc, increment, onSnapshot } from 'firebase/firestore';
-import Lightbox from './Lightbox'; // Importa il componente Lightbox
+import Lightbox from './Lightbox';
 
 function Home({ user }) {
   const [catImage, setCatImage] = useState(null);
@@ -16,7 +16,6 @@ function Home({ user }) {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Fetch top cats when component mounts
   useEffect(() => {
     const fetchTopCats = async () => {
       setLoading(true);
@@ -36,7 +35,6 @@ function Home({ user }) {
     fetchTopCats();
   }, []);
 
-  // Update likes in real-time
   useEffect(() => {
     if (catId) {
       const imageRef = doc(firestore, 'images', catId);
@@ -50,7 +48,6 @@ function Home({ user }) {
     }
   }, [catId]);
 
-  // Check if the image is liked or favorited by the user
   useEffect(() => {
     if (user && catId) {
       const checkLikeAndFavorite = async () => {
@@ -71,7 +68,6 @@ function Home({ user }) {
     }
   }, [user, catId]);
 
-  // Generate a new cat image
   const generateCat = async () => {
     setLoading(true);
     try {
@@ -93,7 +89,6 @@ function Home({ user }) {
     }
   };
 
-  // Handle like and unlike functionality
   const handleLike = async () => {
     if (user && catId) {
       try {
@@ -115,7 +110,6 @@ function Home({ user }) {
     }
   };
 
-  // Handle favorite and unfavorite functionality
   const handleFavorite = async () => {
     if (user && catId) {
       try {
@@ -136,15 +130,14 @@ function Home({ user }) {
     }
   };
 
-  // Handle image click for lightbox
   const handleImageClick = (index) => {
     setPhotoIndex(index);
     setIsOpen(true);
   };
 
   return (
-    <div style={{ padding: 20, textAlign: 'center' }}>
-      <Typography variant="h3" style={{ marginBottom: 20, fontStyle: 'italic', animation: 'fadeIn 2s ease-in-out' }}>
+    <div style={{ padding: '20px', backgroundColor: '#f9f9f9', minHeight: '100vh' }}>
+      <Typography variant="h3" sx={{ mb: 4, fontStyle: 'italic', color: '#333', animation: 'fadeIn 2s ease-in-out' }}>
         Welcome 😺
       </Typography>
 
@@ -152,35 +145,45 @@ function Home({ user }) {
         variant="contained"
         color="primary"
         onClick={generateCat}
-        style={{ marginBottom: 20, backgroundColor: '#ff5722', color: '#fff' }}
+        sx={{ mb: 4, backgroundColor: '#ff5722', color: '#fff', '&:hover': { backgroundColor: '#e64a19' } }}
       >
         😺 Generate Cat
       </Button>
 
       {loading ? (
-        <CircularProgress />
+        <CircularProgress sx={{ color: '#ff5722' }} />
       ) : catImage ? (
-        <Card sx={{ maxWidth: 345, margin: '20px auto', borderRadius: 12, boxShadow: 3 }}>
+        <Card sx={{ maxWidth: 345, mx: 'auto', mb: 4, borderRadius: 12, boxShadow: 3, transition: 'transform 0.3s', '&:hover': { transform: 'scale(1.05)' } }}>
           <CardMedia
             component="img"
             height="300"
             image={catImage}
             alt="Cat"
             onClick={() => handleImageClick(0)}
-            className="card-media"  // Aggiungi la classe CSS qui
+            sx={{ cursor: 'pointer', borderRadius: 12 }}
           />
           <CardContent>
             <Typography variant="body2" color="text.secondary">
               ❤️ Likes: {likes}
             </Typography>
           </CardContent>
-          <CardActions>
+          <CardActions sx={{ justifyContent: 'center' }}>
             {user && (
               <>
                 <Button
                   size="small"
                   color={isLiked ? "secondary" : "primary"}
                   onClick={handleLike}
+                  sx={{
+                    transition: 'transform 0.2s, background-color 0.2s',
+                    '&:hover': {
+                      backgroundColor: isLiked ? '#d32f2f' : '#1976d2',
+                      transform: 'scale(1.1)',
+                    },
+                    '&:active': {
+                      transform: 'scale(0.9)',
+                    },
+                  }}
                 >
                   {isLiked ? '💔 Unlike' : '❤️ Like'}
                 </Button>
@@ -188,6 +191,16 @@ function Home({ user }) {
                   size="small"
                   color={isFavorited ? "warning" : "primary"}
                   onClick={handleFavorite}
+                  sx={{
+                    transition: 'transform 0.2s, background-color 0.2s',
+                    '&:hover': {
+                      backgroundColor: isFavorited ? '#fbc02d' : '#1976d2',
+                      transform: 'scale(1.1)',
+                    },
+                    '&:active': {
+                      transform: 'scale(0.9)',
+                    },
+                  }}
                 >
                   {isFavorited ? '⭐ Unfavorite' : '🌟 Favorite'}
                 </Button>
@@ -197,17 +210,17 @@ function Home({ user }) {
         </Card>
       ) : null}
 
-      <Grid container spacing={2} style={{ marginTop: 20 }}>
+      <Grid container spacing={2} sx={{ mt: 4 }}>
         {topCats.map((cat, index) => (
           <Grid item xs={12} sm={6} md={4} key={cat.id}>
-            <Card sx={{ maxWidth: 345, margin: '20px auto', borderRadius: 12, boxShadow: 3 }}>
+            <Card sx={{ maxWidth: 345, mx: 'auto', mb: 4, borderRadius: 12, boxShadow: 3, transition: 'transform 0.3s', '&:hover': { transform: 'scale(1.05)' } }}>
               <CardMedia
                 component="img"
                 height="300"
                 image={cat.url}
                 alt="Cat"
                 onClick={() => handleImageClick(index + 1)}
-                className="card-media"  // Aggiungi la classe CSS qui
+                sx={{ cursor: 'pointer', borderRadius: 12 }}
               />
               <CardContent>
                 <Typography variant="body2" color="text.secondary">
