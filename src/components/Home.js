@@ -16,20 +16,27 @@ function Home({ user }) {
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Fetch top cats when component mounts
   useEffect(() => {
     const fetchTopCats = async () => {
       setLoading(true);
-      const catsRef = collection(firestore, 'images');
-      const topCatsQuery = query(catsRef, orderBy('likes', 'desc'), limit(10));
-      const querySnapshot = await getDocs(topCatsQuery);
-      const catsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setTopCats(catsData);
-      setLoading(false);
+      try {
+        const catsRef = collection(firestore, 'images');
+        const topCatsQuery = query(catsRef, orderBy('likes', 'desc'), limit(10));
+        const querySnapshot = await getDocs(topCatsQuery);
+        const catsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setTopCats(catsData);
+      } catch (error) {
+        console.error("Error fetching top cats:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchTopCats();
   }, []);
 
+  // Update likes in real-time
   useEffect(() => {
     if (catId) {
       const imageRef = doc(firestore, 'images', catId);
@@ -43,70 +50,93 @@ function Home({ user }) {
     }
   }, [catId]);
 
+  // Check if the image is liked or favorited by the user
   useEffect(() => {
     if (user && catId) {
-      const likeRef = doc(firestore, 'images', catId, 'likes', user.uid);
-      getDoc(likeRef).then((docSnapshot) => {
-        setIsLiked(docSnapshot.exists());
-      });
+      const checkLikeAndFavorite = async () => {
+        try {
+          const likeRef = doc(firestore, 'images', catId, 'likes', user.uid);
+          const likeDoc = await getDoc(likeRef);
+          setIsLiked(likeDoc.exists());
 
-      const favoriteRef = doc(firestore, 'favorites', `${user.uid}_${catId}`);
-      getDoc(favoriteRef).then((docSnapshot) => {
-        setIsFavorited(docSnapshot.exists());
-      });
+          const favoriteRef = doc(firestore, 'favorites', `${user.uid}_${catId}`);
+          const favoriteDoc = await getDoc(favoriteRef);
+          setIsFavorited(favoriteDoc.exists());
+        } catch (error) {
+          console.error("Error checking like or favorite status:", error);
+        }
+      };
+
+      checkLikeAndFavorite();
     }
   }, [user, catId]);
 
+  // Generate a new cat image
   const generateCat = async () => {
     setLoading(true);
-    const response = await axios.get('https://api.thecatapi.com/v1/images/search');
-    const newCatImage = response.data[0].url;
-    const newCatId = response.data[0].id;
-    setCatImage(newCatImage);
-    setCatId(newCatId);
+    try {
+      const response = await axios.get('https://api.thecatapi.com/v1/images/search');
+      const newCatImage = response.data[0].url;
+      const newCatId = response.data[0].id;
+      setCatImage(newCatImage);
+      setCatId(newCatId);
 
-    const imageRef = doc(firestore, 'images', newCatId);
-    const imageDoc = await getDoc(imageRef);
-    if (!imageDoc.exists()) {
-      await setDoc(imageRef, { likes: 0, url: newCatImage });
+      const imageRef = doc(firestore, 'images', newCatId);
+      const imageDoc = await getDoc(imageRef);
+      if (!imageDoc.exists()) {
+        await setDoc(imageRef, { likes: 0, url: newCatImage });
+      }
+    } catch (error) {
+      console.error("Error generating cat image:", error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
+  // Handle like and unlike functionality
   const handleLike = async () => {
     if (user && catId) {
-      const imageRef = doc(firestore, 'images', catId);
-      const likeRef = doc(firestore, 'images', catId, 'likes', user.uid);
+      try {
+        const imageRef = doc(firestore, 'images', catId);
+        const likeRef = doc(firestore, 'images', catId, 'likes', user.uid);
 
-      if (isLiked) {
-        await updateDoc(imageRef, { likes: increment(-1) });
-        await deleteDoc(likeRef);
-        setIsLiked(false);
-      } else {
-        await updateDoc(imageRef, { likes: increment(1) });
-        await setDoc(likeRef, { liked: true });
-        setIsLiked(true);
+        if (isLiked) {
+          await updateDoc(imageRef, { likes: increment(-1) });
+          await deleteDoc(likeRef);
+          setIsLiked(false);
+        } else {
+          await updateDoc(imageRef, { likes: increment(1) });
+          await setDoc(likeRef, { liked: true });
+          setIsLiked(true);
+        }
+      } catch (error) {
+        console.error("Error handling like:", error);
       }
     }
   };
 
+  // Handle favorite and unfavorite functionality
   const handleFavorite = async () => {
     if (user && catId) {
-      const favoriteRef = doc(firestore, 'favorites', `${user.uid}_${catId}`);
-
-      if (isFavorited) {
-        await deleteDoc(favoriteRef);
-      } else {
-        await setDoc(favoriteRef, {
-          imageUrl: catImage,
-          imageId: catId,
-          userId: user.uid,
-        });
+      try {
+        const favoriteRef = doc(firestore, 'favorites', `${user.uid}_${catId}`);
+        if (isFavorited) {
+          await deleteDoc(favoriteRef);
+        } else {
+          await setDoc(favoriteRef, {
+            imageUrl: catImage,
+            imageId: catId,
+            userId: user.uid,
+          });
+        }
+        setIsFavorited(!isFavorited);
+      } catch (error) {
+        console.error("Error handling favorite:", error);
       }
-      setIsFavorited(!isFavorited);
     }
   };
 
+  // Handle image click for lightbox
   const handleImageClick = (index) => {
     setPhotoIndex(index);
     setIsOpen(true);
@@ -129,7 +159,7 @@ function Home({ user }) {
 
       {loading ? (
         <CircularProgress />
-      ) : catImage && (
+      ) : catImage ? (
         <Card sx={{ maxWidth: 345, margin: '20px auto', borderRadius: 12, boxShadow: 3 }}>
           <CardMedia
             component="img"
@@ -165,7 +195,7 @@ function Home({ user }) {
             )}
           </CardActions>
         </Card>
-      )}
+      ) : null}
 
       <Grid container spacing={2} style={{ marginTop: 20 }}>
         {topCats.map((cat, index) => (
