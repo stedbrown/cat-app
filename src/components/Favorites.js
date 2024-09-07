@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { firestore } from '../firebase';
-import { Grid, Card, CardMedia } from '@mui/material';
-import { collection, query, where, onSnapshot } from 'firebase/firestore';
+import { Grid, Card, CardMedia, Button } from '@mui/material';
+import { collection, query, where, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
 
 function Favorites({ user }) {
   const [favorites, setFavorites] = useState([]);
@@ -20,6 +20,10 @@ function Favorites({ user }) {
     }
   }, [user]);
 
+  const handleRemoveFavorite = async (id) => {
+    await deleteDoc(doc(firestore, 'favorites', id));
+  };
+
   return (
     <div style={{ padding: 20 }}>
       <h2>Your Favorite Cats</h2>
@@ -33,6 +37,9 @@ function Favorites({ user }) {
                 image={favorite.imageUrl}
                 alt="Favorite Cat"
               />
+              <Button onClick={() => handleRemoveFavorite(favorite.id)}>
+                Remove from Favorites
+              </Button>
             </Card>
           </Grid>
         ))}

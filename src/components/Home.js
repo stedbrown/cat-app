@@ -3,14 +3,14 @@ import axios from 'axios';
 import { Button, Card, CardMedia, CardActions, CardContent, Typography } from '@mui/material';
 import { Favorite, Star } from '@mui/icons-material';
 import { firestore } from '../firebase';
-import { collection, doc, getDoc, setDoc, updateDoc, increment, onSnapshot } from 'firebase/firestore';
+import { collection, doc, getDoc, setDoc, deleteDoc, updateDoc, increment, onSnapshot } from 'firebase/firestore';
 
 function Home({ user }) {
   const [catImage, setCatImage] = useState(null);
   const [catId, setCatId] = useState(null);
   const [likes, setLikes] = useState(0);
-  const [favorites, setFavorites] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
+  const [isFavorited, setIsFavorited] = useState(false);
 
   useEffect(() => {
     if (catId) {
@@ -31,6 +31,11 @@ function Home({ user }) {
       getDoc(likeRef).then((docSnapshot) => {
         setIsLiked(docSnapshot.exists());
       });
+
+      const favoriteRef = doc(firestore, 'favorites', `${user.uid}_${catId}`);
+      getDoc(favoriteRef).then((docSnapshot) => {
+        setIsFavorited(docSnapshot.exists());
+      });
     }
   }, [user, catId]);
 
@@ -40,9 +45,7 @@ function Home({ user }) {
     const newCatId = response.data[0].id;
     setCatImage(newCatImage);
     setCatId(newCatId);
-    setFavorites(0);
-    
-    // Initialize the image document in Firestore if it doesn't exist
+
     const imageRef = doc(firestore, 'images', newCatId);
     const imageDoc = await getDoc(imageRef);
     if (!imageDoc.exists()) {
@@ -57,7 +60,7 @@ function Home({ user }) {
 
       if (isLiked) {
         await updateDoc(imageRef, { likes: increment(-1) });
-        await setDoc(likeRef, { liked: false });
+        await deleteDoc(likeRef);
         setIsLiked(false);
       } else {
         await updateDoc(imageRef, { likes: increment(1) });
@@ -69,12 +72,18 @@ function Home({ user }) {
 
   const handleFavorite = async () => {
     if (user && catId) {
-      await setDoc(doc(firestore, 'favorites', `${user.uid}_${catId}`), {
-        imageUrl: catImage,
-        imageId: catId,
-        userId: user.uid,
-      });
-      setFavorites(favorites + 1);
+      const favoriteRef = doc(firestore, 'favorites', `${user.uid}_${catId}`);
+
+      if (isFavorited) {
+        await deleteDoc(favoriteRef);
+      } else {
+        await setDoc(favoriteRef, {
+          imageUrl: catImage,
+          imageId: catId,
+          userId: user.uid,
+        });
+      }
+      setIsFavorited(!isFavorited);
     }
   };
 
@@ -93,7 +102,7 @@ function Home({ user }) {
           />
           <CardContent>
             <Typography variant="body2" color="text.secondary">
-              Likes: {likes} | Favorites: {favorites}
+              Likes: {likes}
             </Typography>
           </CardContent>
           <CardActions>
@@ -106,8 +115,12 @@ function Home({ user }) {
                 >
                   <Favorite /> {isLiked ? 'Unlike' : 'Like'}
                 </Button>
-                <Button size="small" color="primary" onClick={handleFavorite}>
-                  <Star /> Favorite
+                <Button 
+                  size="small" 
+                  color={isFavorited ? "warning" : "primary"} 
+                  onClick={handleFavorite}
+                >
+                  <Star /> {isFavorited ? 'Unfavorite' : 'Favorite'}
                 </Button>
               </>
             )}
