@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Button, Card, CardMedia, CardActions, CardContent, Typography } from '@mui/material';
 import { Favorite, Star } from '@mui/icons-material';
 import { firestore } from '../firebase';
-import { collection, doc, getDoc, setDoc, deleteDoc, updateDoc, increment, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc, updateDoc, increment, onSnapshot } from 'firebase/firestore';
 
 function Home({ user }) {
   const [catImage, setCatImage] = useState(null);
