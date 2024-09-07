@@ -40,3 +40,12 @@ body {
   text-align: center;
   margin-top: 20px;
 }
+
+.card-media {
+  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+.card-media:hover {
+  transform: scale(1.05); /* Ingrandisce leggermente l'immagine */
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Aggiunge un'ombra per un effetto di profondità */
+}

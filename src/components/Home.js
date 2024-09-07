@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Button, Card, CardMedia, CardActions, CardContent, Typography, Grid } from '@mui/material';
-// import { Favorite, Star } from '@mui/icons-material';
+import { Button, Card, CardMedia, CardActions, CardContent, Typography, Grid, CircularProgress } from '@mui/material';
 import { firestore } from '../firebase';
 import { collection, query, orderBy, limit, getDocs, doc, getDoc, setDoc, deleteDoc, updateDoc, increment, onSnapshot } from 'firebase/firestore';
 import Lightbox from './Lightbox'; // Importa il componente Lightbox
@@ -15,14 +14,17 @@ function Home({ user }) {
   const [topCats, setTopCats] = useState([]);
   const [photoIndex, setPhotoIndex] = useState(-1);
   const [isOpen, setIsOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const fetchTopCats = async () => {
+      setLoading(true);
       const catsRef = collection(firestore, 'images');
       const topCatsQuery = query(catsRef, orderBy('likes', 'desc'), limit(10));
       const querySnapshot = await getDocs(topCatsQuery);
       const catsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setTopCats(catsData);
+      setLoading(false);
     };
 
     fetchTopCats();
@@ -56,6 +58,7 @@ function Home({ user }) {
   }, [user, catId]);
 
   const generateCat = async () => {
+    setLoading(true);
     const response = await axios.get('https://api.thecatapi.com/v1/images/search');
     const newCatImage = response.data[0].url;
     const newCatId = response.data[0].id;
@@ -67,6 +70,7 @@ function Home({ user }) {
     if (!imageDoc.exists()) {
       await setDoc(imageRef, { likes: 0, url: newCatImage });
     }
+    setLoading(false);
   };
 
   const handleLike = async () => {
@@ -109,23 +113,31 @@ function Home({ user }) {
   };
 
   return (
-    <div style={{ padding: 20 }}>
-      <Typography variant="h3" className="animated-text">
+    <div style={{ padding: 20, textAlign: 'center' }}>
+      <Typography variant="h3" style={{ marginBottom: 20, fontStyle: 'italic', animation: 'fadeIn 2s ease-in-out' }}>
         Welcome to Cat Gallery 😺
       </Typography>
 
-      <Button variant="contained" color="primary" onClick={generateCat}>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={generateCat}
+        style={{ marginBottom: 20, backgroundColor: '#ff5722', color: '#fff' }}
+      >
         😺 Generate Cat
       </Button>
 
-      {catImage && (
-        <Card sx={{ maxWidth: 345, margin: '20px auto' }}>
+      {loading ? (
+        <CircularProgress />
+      ) : catImage && (
+        <Card sx={{ maxWidth: 345, margin: '20px auto', borderRadius: 12, boxShadow: 3 }}>
           <CardMedia
             component="img"
             height="300"
             image={catImage}
             alt="Cat"
             onClick={() => handleImageClick(0)}
+            className="card-media"  // Aggiungi la classe CSS qui
           />
           <CardContent>
             <Typography variant="body2" color="text.secondary">
@@ -135,16 +147,16 @@ function Home({ user }) {
           <CardActions>
             {user && (
               <>
-                <Button 
-                  size="small" 
-                  color={isLiked ? "secondary" : "primary"} 
+                <Button
+                  size="small"
+                  color={isLiked ? "secondary" : "primary"}
                   onClick={handleLike}
                 >
                   {isLiked ? '💔 Unlike' : '❤️ Like'}
                 </Button>
-                <Button 
-                  size="small" 
-                  color={isFavorited ? "warning" : "primary"} 
+                <Button
+                  size="small"
+                  color={isFavorited ? "warning" : "primary"}
                   onClick={handleFavorite}
                 >
                   {isFavorited ? '⭐ Unfavorite' : '🌟 Favorite'}
@@ -158,13 +170,14 @@ function Home({ user }) {
       <Grid container spacing={2} style={{ marginTop: 20 }}>
         {topCats.map((cat, index) => (
           <Grid item xs={12} sm={6} md={4} key={cat.id}>
-            <Card sx={{ maxWidth: 345, margin: '20px auto' }}>
+            <Card sx={{ maxWidth: 345, margin: '20px auto', borderRadius: 12, boxShadow: 3 }}>
               <CardMedia
                 component="img"
                 height="300"
                 image={cat.url}
                 alt="Cat"
                 onClick={() => handleImageClick(index + 1)}
+                className="card-media"  // Aggiungi la classe CSS qui
               />
               <CardContent>
                 <Typography variant="body2" color="text.secondary">
@@ -176,7 +189,6 @@ function Home({ user }) {
         ))}
       </Grid>
 
-      {/* Lightbox per visualizzare l'immagine ingrandita */}
       <Lightbox
         isOpen={isOpen}
         imageSrc={photoIndex === 0 ? catImage : topCats[photoIndex - 1]?.url}
