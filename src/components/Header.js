@@ -22,22 +22,22 @@ function Header({ user }) {
   };
 
   return (
-    <AppBar position="static" sx={{ backgroundColor: '#ff5722' }}>
+    <AppBar position="static" sx={{ backgroundColor: '#ffffff', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', borderBottom: '1px solid #e0e0e0' }}>
       <Toolbar>
         <Typography 
           variant="h6" 
-          sx={{ flexGrow: 1, textAlign: 'left', fontFamily: 'Roboto, sans-serif' }}
+          sx={{ flexGrow: 1, fontFamily: 'Roboto, sans-serif', fontWeight: 'bold', color: '#333' }}
         >
           <Link 
             to="/" 
             style={{ 
-              color: 'white', 
+              color: '#333', 
               textDecoration: 'none', 
-              marginLeft: '20px',  // Spazio a sinistra per desktop
-              fontSize: '1.5rem'   // Adatta la dimensione del testo
+              fontSize: '1.8rem',
+              fontWeight: 'bold'
             }}
           >
-            🐈Cat App
+            🐈 Cat App
           </Link>
         </Typography>
         {user ? (
@@ -46,14 +46,14 @@ function Header({ user }) {
               color="inherit" 
               component={Link} 
               to="/favorites"
-              sx={{ fontFamily: 'Roboto, sans-serif' }}
+              sx={{ fontFamily: 'Roboto, sans-serif', color: '#333', marginRight: '20px' }}
             >
               Favorites
             </Button>
             <Button 
               color="inherit" 
               onClick={handleLogout}
-              sx={{ fontFamily: 'Roboto, sans-serif' }}
+              sx={{ fontFamily: 'Roboto, sans-serif', color: '#ff5722' }}
             >
               Logout
             </Button>
@@ -62,7 +62,7 @@ function Header({ user }) {
           <Button 
             color="inherit" 
             onClick={handleLogin}
-            sx={{ fontFamily: 'Roboto, sans-serif' }}
+            sx={{ fontFamily: 'Roboto, sans-serif', color: '#ff5722' }}
           >
             Login
           </Button>

@@ -1,63 +1,37 @@
-/* Importa il font Dancing Script se non lo hai già fatto */
-@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap');
-
 body {
-  font-family: 'Dancing Script', cursive;
-  background-color: #b3e6f3;
+  font-family: 'Roboto', sans-serif;
+  background-color: #f5f5f5;
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
 }
 
-/* Stile globale dell'applicazione */
 .App {
   text-align: center;
-  padding: 20px;
+  margin: 0 auto;
+  max-width: 1200px; /* Limita la larghezza per un layout più pulito */
 }
 
-/* Stili per le carte */
 .MuiCard-root {
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-  transition: box-shadow 0.3s ease-in-out, transform 0.3s ease-in-out;
-  border-radius: 12px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 8px; /* Aggiungi angoli arrotondati per un look più moderno */
 }
 
 .MuiCard-root:hover {
+  transform: translateY(-4px); /* Aggiungi un effetto di sollevamento */
   box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-  transform: translateY(-5px); /* Solleva leggermente la carta */
 }
 
-/* Stili per i pulsanti */
 .MuiButton-root {
-  margin: 10px;
-  border-radius: 8px;
-  font-weight: 600;
+  margin: 8px;
+  border-radius: 20px; /* Pulsanti con angoli arrotondati */
 }
 
-/* Animazione del testo */
-@keyframes wave {
-  0% { transform: translateX(0); }
-  50% { transform: translateX(10px); }
-  100% { transform: translateX(0); }
-}
-
-.animated-text {
-  font-family: 'Dancing Script', cursive;
-  font-size: 36px;
-  color: #ff69b4;
-  animation: wave 2s infinite ease-in-out;
-  text-align: center;
-  margin: 20px auto;
-  max-width: 90%;
-}
-
-/* Stili per le immagini delle carte */
 .card-media {
-  transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
-  border-radius: 8px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .card-media:hover {
-  transform: scale(1.05); /* Ingrandisce leggermente l'immagine */
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Aggiunge un'ombra per un effetto di profondità */
+  transform: scale(1.05);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
