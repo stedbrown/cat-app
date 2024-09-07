@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Button, Card, CardMedia, CardActions, CardContent, Typography, Grid } from '@mui/material';
-import { Favorite, Star } from '@mui/icons-material';
+// import { Favorite, Star } from '@mui/icons-material';
 import { firestore } from '../firebase';
 import { collection, query, orderBy, limit, getDocs, doc, getDoc, setDoc, deleteDoc, updateDoc, increment, onSnapshot } from 'firebase/firestore';
 import Lightbox from './Lightbox'; // Importa il componente Lightbox
